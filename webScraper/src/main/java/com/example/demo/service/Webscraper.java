@@ -1,31 +1,28 @@
 package com.example.demo.service;
 
+import com.example.demo.model.Article;
+import com.example.demo.repository.ArticleRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.net.URL;
 
+@Service
 public class Webscraper {
-
-    public static void main(String[] args) {
-        new Webscraper();
+    private ArticleRepository articleRepository;
+    public Webscraper(ArticleRepository articleRepository) {
+        this.articleRepository = articleRepository;
     }
 
-    public Webscraper() {
-        scrape();
-    }
-
-    void scrape(){
+    public void scrape(){
         try {
-
-        String url = "https://news.ycombinator.com";
-//        BufferedReader in = new BufferedReader(
-//                new InputStreamReader(oracle.openStream()));
+            String url = "https://news.ycombinator.com";
             Document doc = Jsoup.connect(url).get();
             Elements rows = doc.select("tr.athing");
             for(Element row : rows){
@@ -37,17 +34,17 @@ public class Webscraper {
                 int scoreNumber = Integer.parseInt(score);
                 if(scoreNumber > 100){
                     System.out.println("\nScore: " + score );
-                    System.out.println("link: " + row.select("a.storylink").attr("href"));
-                    System.out.println("Title: " + row.select("a.storylink").text() + "\n");
+                    String link = row.select("a.storylink").attr("href");
+                    String title = row.select("a.storylink").text();
+
+                    Article article = new Article();
+                    article.setTitle(title);
+                    article.setUrl(link);
+                    article.setScore(scoreNumber);
+
+                    articleRepository.save(article);
                 }
             }
-
-//        String inputLine;
-//        FileWriter writer = new FileWriter("p.html");
-//        while ((inputLine = in.readLine()) != null)
-//            writer.write(inputLine);
-////            System.out.println(inputLine);
-//        in.close();
         }
         catch(Exception e){
             System.out.println("error in scraping: " + e.getMessage());
